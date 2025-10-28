@@ -111,7 +111,74 @@ npm run dev  # Webhook Server 运行在 3000 端口
 
 ### 生产环境部署
 
-#### 选项 1：部署到 VPS/云服务器
+#### 🚀 选项 1：部署到 1Panel（推荐）
+
+**1Panel 是一款现代化的 Linux 服务器管理面板，支持 Docker 和 Docker Compose。**
+
+详细步骤请查看：**[1Panel 部署指南](./1PANEL_DEPLOYMENT.md)**
+
+快速部署：
+
+```bash
+# 1. 上传项目到服务器
+rsync -avz --exclude='node_modules' --exclude='.git' \
+  ./ user@your-server:/opt/gitlab-webhook-server/
+
+# 2. SSH 登录服务器
+ssh user@your-server
+cd /opt/gitlab-webhook-server
+
+# 3. 配置环境变量
+cp .env.example .env
+nano .env  # 编辑配置
+
+# 4. 使用快速部署脚本
+chmod +x deploy.sh
+./deploy.sh
+
+# 或者手动使用 Docker Compose
+docker-compose up -d
+
+# 5. 在 1Panel 中管理
+# 打开 1Panel → 容器 → 编排 → 查看 gitlab-webhook-server
+```
+
+**优势**：
+- ✅ 可视化管理容器
+- ✅ 一键启动/停止/重启
+- ✅ 实时查看日志
+- ✅ 配置反向代理和 SSL 证书
+- ✅ 资源监控
+
+---
+
+#### 选项 2：使用 Docker Compose（手动）
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/your-username/gitlab-webhook-server.git
+cd gitlab-webhook-server
+
+# 2. 配置环境变量
+cp .env.example .env
+# 编辑 .env，设置 MASTRA_API_URL 指向你的 Mastra API 服务
+
+# 3. 启动服务
+docker-compose up -d
+
+# 4. 查看日志
+docker-compose logs -f
+
+# 5. 查看状态
+docker-compose ps
+
+# 6. 停止服务
+docker-compose down
+```
+
+---
+
+#### 选项 3：部署到 VPS/云服务器
 
 ```bash
 # 1. 克隆项目
@@ -135,27 +202,9 @@ pm2 save
 pm2 startup
 ```
 
-#### 选项 2：使用 Docker
+---
 
-创建 `Dockerfile`：
-
-```dockerfile
-FROM node:20-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm install
-
-COPY . .
-RUN npm run build
-
-EXPOSE 3000
-
-CMD ["npm", "start"]
-```
-
-构建和运行：
+#### 选项 4：使用 Docker（单容器）
 
 ```bash
 # 构建镜像
@@ -166,10 +215,16 @@ docker run -d \
   --name webhook-server \
   -p 3000:3000 \
   --env-file .env \
+  --restart unless-stopped \
   gitlab-webhook-server
+
+# 查看日志
+docker logs -f webhook-server
 ```
 
-#### 选项 3：部署到 Heroku
+---
+
+#### 选项 5：部署到 Heroku
 
 ```bash
 # 创建 Heroku 应用
